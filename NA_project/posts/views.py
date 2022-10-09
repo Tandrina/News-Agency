@@ -1,10 +1,11 @@
 from datetime import datetime
 
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
-from .models import Post
+from .models import Category
 
 from .filters import PostFilter
 from .forms import *
@@ -120,4 +121,27 @@ class ArticleDel(PermissionRequiredMixin, DeleteView):
     model = Post
     template_name = 'art_delete.html'
     success_url = reverse_lazy('post_list')
+
+
+class CategoryView(ListView):
+    model = Post  # какую модель используем
+    ordering = '-dateAdd'  # по какому полю пойдет сортировка
+    template_name = 'category_list.html'  # шаблон для отображения
+    context_object_name = 'category_news'  # список объектов, которые будут передаваться в шаблон
+    paginate_by = 5
+
+    def get_queryset(self):
+        self.postCategory = get_object_or_404(Category, id=self.kwargs['pk'])
+        queryset = Post.objects.filter(postCategory=self.postCategory).order_by('-dateAdd')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        # обращаемся к родительскому классу
+        # и вызываем этот же метод с теми же аргументами, что были переданы нам.
+        context = super().get_context_data(**kwargs)
+        # К словарю добавляем переменные
+
+        context['is_not_subscriber'] = self.request.user not in self.postCategory.subscribe.all()
+        context['Category'] = self.postCategory
+        return context
 

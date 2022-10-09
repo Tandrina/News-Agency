@@ -30,6 +30,8 @@ class Author(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=64, unique=True)
 
+    subscribe = models.ManyToManyField(User, related_name='category')
+
     def __str__(self):
         return self.name
 
